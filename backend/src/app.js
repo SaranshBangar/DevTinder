@@ -1,38 +1,40 @@
 const express = require("express");
-const { adminAuth, userAuth } = require("./middlewares/auth");
-
 const app = express();
+app.use(express.json());
 
-// app.use("/admin", adminAuth);
+const connectDB = require("./config/database");
 
-// app.get("/admin/getData", (req, res) => {
-//     res.send("Fetched all data!");
-// });
+const User = require("./models/user");
 
-// app.get("/admin/deleteData", (req, res) => {
-//     res.send("Deleted data!");
-// });
+app.post("/signup", async (req, res) => {
 
-// app.use("/user/login", (req, res) => {
-//     res.send("User login successfull!");
-// });
-
-// app.use("/user", userAuth, (req, res) => {
-//     res.send("Accessed user data!");
-// });
-
-app.use("/", (err, req, res, next) => {
-    if (err) {
-        res.status(500).send("Something went wrong!");
-    } else {
-        next();
+    const userObj = {
+        firstName : "User",
+        lastName : "4",
+        emailId : "user4@gmail.com",
+        password : "pass4",
+        age : 4,
     }
-});
 
-app.get("/", (req, res) => {
-    res.send("User data fetched successfully!");
-});
+    const user = new User(userObj);
 
-app.listen(3000, () => {
-    console.log("Server is running successfully at port 3000!");
-});
+    try {
+        await user.save();
+        res.status(200).send("User added successfully" + user);
+    }
+    catch (err) {
+        res.status(400).send("User could not be added" + err.message);
+    }
+
+})
+
+connectDB()
+    .then(() => {
+        console.log('Database connected');
+        app.listen(3000, () => {
+            console.log("Server is running successfully at port 3000!");
+        });
+    })
+    .catch((err) => {
+        console.log("Database not connected ->", err.message);
+    });
