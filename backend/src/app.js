@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-app.use(express.json());
+app.use(express.json()); 
 
 const connectDB = require("./config/database");
 
@@ -8,24 +8,17 @@ const User = require("./models/user");
 
 app.post("/signup", async (req, res) => {
 
-    const userObj = {
-        firstName : "User",
-        lastName : "4",
-        emailId : "user4@gmail.com",
-        password : "pass4",
-        age : 4,
-    }
+    const user = new User(req.body);
 
-    const user = new User(userObj);
+    console.log(req.body);
 
     try {
         await user.save();
         res.status(200).send("User added successfully" + user);
     }
     catch (err) {
-        res.status(400).send("User could not be added" + err.message);
+        res.status(400).send("User could not be added" + err.message);  
     }
-
 })
 
 connectDB()
