@@ -19,6 +19,20 @@ app.post("/signup", async (req, res) => {
     catch (err) {
         res.status(400).send("User could not be added" + err.message);  
     }
+
+})
+
+// API to fetch all the users for the feed page
+app.get("/feed", async (req, res) => {
+
+    try {
+        const users = await User.find({});
+        res.status(200).send(users);
+    }
+    catch (err) {
+        res.status(400).send("Users could not be fetched");
+    }
+
 })
 
 connectDB()
