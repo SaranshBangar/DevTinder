@@ -72,11 +72,30 @@ app.delete("/user", async (req, res, next) => {
 // API to update a particular user
 app.patch("/user", async (req, res) => {
 
-    const userId = req.body.userId;
+    // Updates a user with the given userId
+        // const userId = req.body.userId;
+        // const updatedData = req.body;
+
+        // try {
+        //     await User.findByIdAndUpdate(userId, updatedData);
+        //     res.status(200).send("User updated successfully");
+        // }
+        // catch (err) {
+        //     res.status(400).send("Something went wrong");
+        // }
+
+    // Updates a user with the given emailId
+    const userEmail = req.body.emailId;
     const updatedData = req.body;
 
     try {
-        await User.findByIdAndUpdate(userId, updatedData);
+        await User.findOneAndUpdate
+        (
+            {
+                emailId: userEmail
+            },
+            updatedData
+        );
         res.status(200).send("User updated successfully");
     }
     catch (err) {
