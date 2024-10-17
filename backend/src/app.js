@@ -6,6 +6,7 @@ const connectDB = require("./config/database");
 
 const User = require("./models/user");
 
+// API to add a new user
 app.post("/signup", async (req, res) => {
 
     const user = new User(req.body);
@@ -31,6 +32,55 @@ app.get("/feed", async (req, res) => {
     }
     catch (err) {
         res.status(400).send("Users could not be fetched");
+    }
+
+})
+
+// API to delete a particular user
+app.delete("/user", async (req, res, next) => {
+
+    const userEmail = req.body.emailId;
+    const userPassword = req.body.password;
+
+    try {
+        const user = await User.findOne({ emailId: userEmail, password: userPassword });
+        if (!user) {
+            res.status(404).send("User not found");
+        }
+        else {
+            let userId = user._id;
+            req.userId = userId;
+            next();
+        }
+    }
+    catch (err) {
+        res.status(400).send("Something went wrong 1");
+    }
+
+}, async (req, res) => {
+    
+    try {
+        await User.findByIdAndDelete(req.userId);
+        res.status(200).send("User deleted successfully");
+    }
+    catch (err) {
+        res.status(400).send("Something went wrong 2");
+    }
+
+})
+
+// API to update a particular user
+app.patch("/user", async (req, res) => {
+
+    const userId = req.body.userId;
+    const updatedData = req.body;
+
+    try {
+        await User.findByIdAndUpdate(userId, updatedData);
+        res.status(200).send("User updated successfully");
+    }
+    catch (err) {
+        res.status(400).send("Something went wrong");
     }
 
 })
