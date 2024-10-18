@@ -70,41 +70,56 @@ app.delete("/user", async (req, res, next) => {
 })
 
 // API to update a particular user
-app.patch("/user", async (req, res) => {
+app.patch("/user/:userId", async (req, res) => {
 
     // Updates a user with the given userId
-        // const userId = req.body.userId;
+        const userId = req.params?.userId;
+        const updatedData = req.body;
+
+        try {
+
+            const allowedUpdates = ["password", "age", "gender", "photoUrl", "about", "skills"];
+
+            const isUpdateAllowed = Object.keys(updatedData).every((update) => {
+                return allowedUpdates.includes(update);
+            });
+
+            if (!isUpdateAllowed) {
+                return res.status(400).send("Invalid updates");
+            }
+
+            if (updatedData.skills && Array.isArray(updatedData.skills) && updatedData.skills.length > 10) {
+                return res.status(400).send("Skills array cannot have more than 10 items");
+            }
+
+            await User.findByIdAndUpdate(userId, updatedData);
+            res.status(200).send("User updated successfully");
+        }
+        catch (err) {
+            res.status(400).send("Something went wrong");
+        }
+
+    // Updates a user with the given emailId
+        // const userEmail = req.body.emailId;
         // const updatedData = req.body;
 
         // try {
-        //     await User.findByIdAndUpdate(userId, updatedData);
+        //     await User.findOneAndUpdate
+        //     (
+        //         {
+        //             emailId: userEmail
+        //         },
+        //         updatedData,
+        //         {
+        //             runValidators: true,
+        //             new: true,
+        //         }
+        //     );
         //     res.status(200).send("User updated successfully");
         // }
         // catch (err) {
         //     res.status(400).send("Something went wrong");
         // }
-
-    // Updates a user with the given emailId
-    const userEmail = req.body.emailId;
-    const updatedData = req.body;
-
-    try {
-        await User.findOneAndUpdate
-        (
-            {
-                emailId: userEmail
-            },
-            updatedData,
-            {
-                runValidators: true,
-                new: true,
-            }
-        );
-        res.status(200).send("User updated successfully");
-    }
-    catch (err) {
-        res.status(400).send("Something went wrong");
-    }
 
 })
 
