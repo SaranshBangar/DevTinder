@@ -94,7 +94,11 @@ app.patch("/user", async (req, res) => {
             {
                 emailId: userEmail
             },
-            updatedData
+            updatedData,
+            {
+                runValidators: true,
+                new: true,
+            }
         );
         res.status(200).send("User updated successfully");
     }
