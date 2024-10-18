@@ -10,12 +10,22 @@ const User = require("./models/user");
 app.post("/signup", async (req, res) => {
 
     const user = new User(req.body);
-
-    console.log(req.body);
+    const updatedData = req.body;
 
     try {
+
+        const allowedUpdates = ["firstName", "lastName", "emailId", "password"];
+
+        const isUpdateAllowed = Object.keys(updatedData).every((update) => {
+            return allowedUpdates.includes(update);
+        });
+
+        if (!isUpdateAllowed) {
+            return res.status(400).send("Invalid updates");
+        }
+
         await user.save();
-        res.status(200).send("User added successfully" + user);
+        res.status(200).send("User added successfully\n" + user);
     }
     catch (err) {
         res.status(400).send("User could not be added" + err.message);  

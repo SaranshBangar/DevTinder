@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const validator = require('validator');
 
 const userSchema = new mongoose.Schema({
     firstName : {
@@ -21,8 +22,8 @@ const userSchema = new mongoose.Schema({
         unique : true,
         maxlength : 50,
         validate(value) {
-            if (!value.includes('@')) {
-                throw new Error("Email is not valid");
+            if (!validator.isEmail(value)) {
+                throw new Error("Email is invalid\n" + value);
             }
         },
     },
@@ -48,6 +49,11 @@ const userSchema = new mongoose.Schema({
     photoUrl : {
         type : String,
         default : "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png",
+        validate(value) {
+            if (!validator.isURL(value)) {
+                throw new Error("URL is invalid\n" + value);
+            }
+        },
     },
     about : {
         type : String,
