@@ -20,6 +20,11 @@ const userSchema = new mongoose.Schema({
         trim : true,
         unique : true,
         maxlength : 50,
+        validate(value) {
+            if (!value.includes('@')) {
+                throw new Error("Email is not valid");
+            }
+        },
     },
     password : {
         type : String,
