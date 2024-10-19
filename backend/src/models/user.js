@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
     firstName : {
@@ -9,11 +11,13 @@ const userSchema = new mongoose.Schema({
         minlength : 1,
         maxlength : 50,
     },
+
     lastName : {
         type : String,
         trim : true,
         maxlength : 50,
     },
+
     emailId : {
         type: String,
         required : true,
@@ -27,17 +31,20 @@ const userSchema = new mongoose.Schema({
             }
         },
     },
+
     password : {
         type : String,
         required : true,
         trim : true,
         minlength : 8,
     },
+
     age : {
         type : Number,
         min : 18,
         max : 180,
     },
+
     gender : {
         type : String,
         validate(value) {
@@ -46,6 +53,7 @@ const userSchema = new mongoose.Schema({
             }
         },
     },
+
     photoUrl : {
         type : String,
         default : "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png",
@@ -55,16 +63,38 @@ const userSchema = new mongoose.Schema({
             }
         },
     },
+
     about : {
         type : String,
         default : "Hey there! I am using DevTinder",
         maxlength : 255,
     },
+
     skills : {
         type : [String],
     },
-}, {
+},
+{
     timestamps : true,
 });
+
+userSchema.methods.getJWT = async function () {
+
+    const user = this;
+
+    const token = await jwt.sign({_id : user._id}, process.env.JWT_SECRET, {
+        expiresIn : "8h",
+    })
+
+    return token;
+};
+
+userSchema.methods.verifyPassword = async function (password) {
+    
+    const user = this;
+    const hashedPassword = user.password;
+
+    return await bcrypt.compare(password, hashedPassword);
+};
 
 module.exports = mongoose.model("User", userSchema);
