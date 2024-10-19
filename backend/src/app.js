@@ -4,31 +4,74 @@ app.use(express.json());
 
 const connectDB = require("./config/database");
 
+const { validateSignUpData, validateLoginData } = require("./utils/validation");
+
+const bcrypt = require("bcrypt");
+
 const User = require("./models/user");
+
 
 // API to add a new user
 app.post("/signup", async (req, res) => {
 
-    const user = new User(req.body);
-    const updatedData = req.body;
+    try {
+        validateSignUpData(req);
+    }
+    catch (err) {
+        return res.status(400).send(err.message);
+    }
+
+    const { firstName, lastName, emailId, password } = req.body;
+
+    const hashPassword = await bcrypt.hash(password, 5);
+
+    const user = new User({
+        firstName,
+        lastName,
+        emailId,
+        password : hashPassword,
+    });
 
     try {
-
-        const allowedUpdates = ["firstName", "lastName", "emailId", "password"];
-
-        const isUpdateAllowed = Object.keys(updatedData).every((update) => {
-            return allowedUpdates.includes(update);
-        });
-
-        if (!isUpdateAllowed) {
-            return res.status(400).send("Invalid updates");
-        }
-
         await user.save();
         res.status(200).send("User added successfully\n" + user);
     }
     catch (err) {
         res.status(400).send("User could not be added" + err.message);  
+    }
+
+})
+
+// API to login a user
+app.post("/login", async (req, res) => {
+
+    try {
+        validateLoginData(req);
+    }
+    catch (err) {
+        return res.status(400).send(err.message);
+    }
+
+    try {
+        const { emailId, password } = req.body;
+
+        const user = await User.findOne({ emailId });
+
+        if (!user) {
+            return res.status(404).send("Invalid credentials");
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (isPasswordValid) {
+            res.status(200).send("User logged in successfully");
+        }
+        else {
+            res.status(400).send("Invalid credentials");
+        }
+    }
+    catch (err) {
+        res.status(400).send("Something went wrong");
     }
 
 })
