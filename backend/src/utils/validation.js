@@ -29,9 +29,28 @@ const validateLoginData = (req) => {
         throw new Error("Email is invalid");
     }
 
-}
+};
+
+const validateEditProfileData = (req) => {
+    
+    allowedFields = [
+        "firstName",
+        "lastName",
+        "emailId",
+        "photoUrl",
+        "gender",
+        "age",
+        "about",
+        "skills"
+    ];
+
+    const isUpdateAllowed = Object.keys(req.body).every(field => allowedFields.includes(field));
+
+    return isUpdateAllowed;
+};
 
 module.exports = {
     validateSignUpData,
     validateLoginData,
+    validateEditProfileData
 };
