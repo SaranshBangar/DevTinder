@@ -1,7 +1,7 @@
 const express = require('express');
 const requestRouter = express.Router();
 
-const ConnectionRequest = require('../models/ConnectionRequest');
+const ConnectionRequest = require('../models/connectionRequest');
 const User = require('../models/user');
 
 const { userAuth } = require('../middlewares/auth');
@@ -45,12 +45,48 @@ requestRouter.post("/send/:status/:receiverId", userAuth, async (req, res) => {
         });
         
         await connectionRequest.save();
-        res.status(201).send(connectionRequest);
 
-        res.json({
-            message: "Connection request sent",
-            data,
+        res.status(201).json({
+            message: `Connection request sent : ${req.user.firstName} ${status}s ${receiver.firstName}`,
+            data: connectionRequest,
+        });
+    }
+    catch (err) {
+        res.status(400).send("Something went wrong " + err.message);
+    }
+});
+
+// API to get all connection requests
+requestRouter.post("/review/:status/:requestId", userAuth, async (req, res) => {
+
+    const requestId = req.params.requestId;
+    const status = req.params.status;
+
+    try {
+        const loggedInUser = req.user;
+    
+        const allowedStatus = ["accepted", "rejected"];
+        if (!allowedStatus.includes(status)) {
+            return res.status(400).send("Invalid status");
+        }
+
+        const connectionRequest = await ConnectionRequest.findById({
+            _id: requestId,
+            receiverId: loggedInUser._id,
+            status: "like",
         })
+        if (!connectionRequest) {
+            return res.status(404).send("Request not found");
+        }
+
+        connectionRequest.status = status;
+
+        const data = await connectionRequest.save();
+
+        res.status(200).json({
+            message: `Request ${status}`,
+            data,
+        });
     }
     catch (err) {
         res.status(400).send("Something went wrong " + err.message);

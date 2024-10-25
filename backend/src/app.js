@@ -9,13 +9,15 @@ const connectDB = require("./config/database");
 
 require('dotenv').config();
 
-const authRouter = require("./routes/auth");
-const profileRouter = require("./routes/profile");
-const requestRouter = require("./routes/request");
+const authRouter = require("./routes/authRouter");
+const profileRouter = require("./routes/profileRouter");
+const requestRouter = require("./routes/requestRouter");
+const userRouter = require("./routes/userRouter");
 
 app.use("/auth/", authRouter);
 app.use("/profile/", profileRouter);
 app.use("/request/", requestRouter);
+app.use("/user/", userRouter);
 
 
 connectDB()
