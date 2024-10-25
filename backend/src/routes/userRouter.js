@@ -3,6 +3,8 @@ const userRouter = express.Router();
 
 const { userAuth } = require("../middlewares/auth");
 const ConnectionRequest = require("../models/connectionRequest");
+const User = require('../models/user');
+
 
 USER_SAFE_DATA = ["firstName", "lastName", "photoURL", "gender", "age", "about", "skills"];
 
@@ -63,6 +65,45 @@ userRouter.get("/connections", userAuth, async (req, res) => {
     }
     catch (err) {
         res.status(400).send("Error : " + err.message);
+    }
+})
+
+// API to show the feed to the user
+userRouter.get("/feed", userAuth, async (req, res) => {
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit);
+    if (limit > 20) {
+        limit = 20;
+    }
+    
+    try {
+        const LoggedInUser = req.user;
+
+        const connectionRequest = await ConnectionRequest.find({
+            $or : [
+                { senderId : LoggedInUser._id },
+                { receiverId : LoggedInUser._id }
+            ],
+        }).select("senderId receiverId status").populate("senderId receiverId", USER_SAFE_DATA);
+
+        const hiddenUsers = new Set();
+        connectionRequest.forEach((req) => {
+            hiddenUsers.add(req.senderId._id.toString());
+            hiddenUsers.add(req.receiverId._id.toString());
+        });
+        
+        const users = await User.find({
+            _id : { $nin : [...hiddenUsers, LoggedInUser._id] }
+        }).skip((page - 1) * limit).limit(limit);
+
+        res.status(200).json({
+            message : "Data fetched successfully",
+            data : users,
+        });
+    }
+    catch (err) {
+        res.status(400).send("Err : " + err.message);
     }
 })
 
