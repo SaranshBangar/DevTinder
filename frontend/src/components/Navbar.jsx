@@ -1,13 +1,23 @@
+import { useSelector } from "react-redux";
+
 function Navbar() {
+  // Select the user data from Redux store
+  const user = useSelector((state) => state.user);
+
+  console.log(user);
+
   return (
-    <nav>
+    <nav className="z-10">
       <div className="navbar bg-base-300">
+
+        {/* Navbar Start - Mobile Dropdown and Logo */}
         <div className="navbar-start">
           <div className="dropdown">
+            {/* Hamburger Menu Icon */}
             <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
+                className="w-5 h-5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -20,6 +30,8 @@ function Navbar() {
                 />
               </svg>
             </div>
+
+            {/* Mobile Dropdown Menu */}
             <ul
               tabIndex={0}
               className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
@@ -43,12 +55,16 @@ function Navbar() {
               </li>
             </ul>
           </div>
-          <a href="/" className="btn btn-ghost text-xl">
+
+          {/* Logo */}
+          <a href="/" className="text-xl btn btn-ghost">
             DevTinder
           </a>
         </div>
-        <div className="navbar-center hidden lg:flex">
-          <ul className="menu menu-horizontal px-1">
+
+        {/* Navbar Center - Horizontal Menu for Desktop */}
+        <div className="hidden navbar-center lg:flex">
+          <ul className="px-1 menu menu-horizontal">
             <li>
               <a>Item 1</a>
             </li>
@@ -70,39 +86,47 @@ function Navbar() {
             </li>
           </ul>
         </div>
-        <div className="navbar-end">
-          <div className="dropdown dropdown-end">
-            <div
-              tabIndex={0}
-              role="button"
-              className="btn btn-ghost btn-circle avatar"
-            >
-              <div className="w-10 rounded-full">
-                <img
-                  alt="Tailwind CSS Navbar component"
-                  src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
-                />
+
+        {/* Navbar End - User Profile Dropdown */}
+        {user && (
+          <div className="flex gap-1 navbar-end">
+            <p>Welcome {user.data.firstName}!</p>
+            <div className="dropdown dropdown-end">
+              {/* Profile Picture */}
+              <div
+                tabIndex={0}
+                role="button"
+                className="btn btn-ghost btn-circle avatar"
+              >
+                <div className="w-10 rounded-full">
+                  <img
+                    alt={`${user.data.firstName}'s avatar`}
+                    src={user.data.photoUrl}
+                  />
+                </div>
               </div>
+
+              {/* Profile Dropdown Menu */}
+              <ul
+                tabIndex={0}
+                className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
+              >
+                <li>
+                  <a className="justify-between">
+                    Profile
+                    <span className="badge">New</span>
+                  </a>
+                </li>
+                <li>
+                  <a>Settings</a>
+                </li>
+                <li>
+                  <a>Logout</a>
+                </li>
+              </ul>
             </div>
-            <ul
-              tabIndex={0}
-              className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
-            >
-              <li>
-                <a className="justify-between">
-                  Profile
-                  <span className="badge">New</span>
-                </a>
-              </li>
-              <li>
-                <a>Settings</a>
-              </li>
-              <li>
-                <a>Logout</a>
-              </li>
-            </ul>
           </div>
-        </div>
+        )}
       </div>
     </nav>
   );
