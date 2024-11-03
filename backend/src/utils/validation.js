@@ -2,7 +2,7 @@ const validator = require("validator");
 
 const validateSignUpData = (req) => {
     
-    const { firstName, lastName, emailId, password } = req.body;
+    const { firstName, lastName, emailId, password, birthDate } = req.body;
 
     if (!firstName) {
         throw new Error("First name is required");
@@ -17,6 +17,13 @@ const validateSignUpData = (req) => {
 
     if (!validator.isStrongPassword(password)) {
         throw new Error("Password is weak");
+    }
+
+    if (!birthDate) {
+        throw new Error("Birth date is required");
+    }
+    else if (new Date(birthDate) > new Date()) {
+        throw new Error("Birth date cannot be in the future");
     }
 
 };

@@ -17,7 +17,9 @@ authRouter.post("/signup", async (req, res) => {
         return res.status(400).send(err.message);
     }
 
-    const { firstName, lastName, emailId, password } = req.body;
+    const { firstName, lastName, emailId, password, birthDate } = req.body;
+
+    const age = new Date().getFullYear() - new Date(birthDate).getFullYear();
 
     const hashPassword = await bcrypt.hash(password, 5);
 
@@ -26,6 +28,8 @@ authRouter.post("/signup", async (req, res) => {
         lastName,
         emailId,
         password : hashPassword,
+        birthDate,
+        age,
     });
 
     try {
@@ -36,7 +40,7 @@ authRouter.post("/signup", async (req, res) => {
         });
     }
     catch (err) {
-        res.status(400).send("User could not be added" + err.message);  
+        res.status(400).send("User could not be added : " + err.message);  
     }
 
 })

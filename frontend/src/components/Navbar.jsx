@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { BASE_USER_URL } from "../utils/constants";
+import { BASE_USER_URL, BASE_AUTH_URL } from "../utils/constants";
 import { removeUser } from "../utils/userSlice";
 import { Heart, Users, Menu } from 'lucide-react';
 import { useEffect, useState } from "react";

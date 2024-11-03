@@ -15,8 +15,8 @@ const Auth = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Login form state
-  const [emailId, setEmailId] = useState("vk@gmail.com");
-  const [password, setPassword] = useState("Virat@123");
+  const [emailId, setEmailId] = useState("rs@gmail.com");
+  const [password, setPassword] = useState("Rohit@123");
   const [loginError, setLoginError] = useState("");
 
   // Redux and navigation hooks

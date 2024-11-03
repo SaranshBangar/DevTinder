@@ -41,8 +41,8 @@ const userSchema = new mongoose.Schema({
     },
 
     birthDate: {
-        type: Date,
-        required: true,
+        type : Date,
+        required : true,
         validate(value) {
             if (value > new Date()) {
                 throw new Error("Birth date cannot be in the future");
