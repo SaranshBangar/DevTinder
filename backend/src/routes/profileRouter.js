@@ -1,6 +1,8 @@
 const express = require('express');
 const profileRouter = express.Router();
 
+const User = require('../models/user');
+
 const bcrypt = require('bcrypt');
 
 const { userAuth } = require('../middlewares/auth');
@@ -11,7 +13,10 @@ profileRouter.get("/", userAuth, async (req, res) => {
 
     try {
         const user = req.user;
-        res.send(user);
+        res.status(200).json({
+          message : "Profile fetched successfully",
+          data : user
+        });
     }
     catch (err) {
         res.status(400).send("Something went wrong");
@@ -20,26 +25,89 @@ profileRouter.get("/", userAuth, async (req, res) => {
 
 // API to update a profile
 profileRouter.patch("/update", userAuth, async (req, res) => {
+  console.log('Update request received:', {
+      userId: req.user._id,
+      updateData: req.body
+  });
 
-    try {
-        if (!validateEditProfileData(req)) {
-            return res.status(400).send("Invalid fields");
-        }
-        
-        const loggedinUser = req.user;
+  try {
+      const validation = validateEditProfileData(req);
+      console.log('Validation result:', validation);
 
-        Object.keys(req.body).forEach(key => loggedinUser[key] = req.body[key]);
+      if (!validation.isValid) {
+          return res.status(400).json({
+              success: false,
+              error: validation.error
+          });
+      }
 
-        await loggedinUser.save();
+      const updatedUser = await User.findByIdAndUpdate(
+          req.user._id,
+          req.body,
+          {
+              new: true,
+              runValidators: true
+          }
+      );
 
-        res.json({
-            message : "Profile updated successfully",
-            data : loggedinUser
-        });
-    }
-    catch (err) {
-        res.status(400).send("Something went wrong");
-    }
+      console.log('Updated user data:', updatedUser);
+
+      if (!updatedUser) {
+          return res.status(404).json({
+              success: false,
+              error: "User not found"
+          });
+      }
+
+      // Return success response
+      return res.status(200).json({
+          success: true,
+          message: "Profile updated successfully",
+          data: {
+              user: {
+                  firstName: updatedUser.firstName,
+                  lastName: updatedUser.lastName,
+                  about: updatedUser.about,
+                  skills: updatedUser.skills,
+                  photoUrl: updatedUser.photoUrl,
+                  birthDate : updatedUser.birthDate,
+                  age: updatedUser.age,
+                  gender: updatedUser.gender,
+                  location: updatedUser.location,
+                  occupation: updatedUser.occupation
+              }
+          }
+      });
+
+  } catch (err) {
+      console.error('Error in update:', {
+          name: err.name,
+          message: err.message,
+          stack: err.stack
+      });
+
+      // Check for specific error types
+      if (err.name === 'ValidationError') {
+          return res.status(400).json({
+              success: false,
+              error: Object.values(err.errors).map(e => e.message).join(', ')
+          });
+      }
+
+      if (err.name === 'CastError') {
+          return res.status(400).json({
+              success: false,
+              error: 'Invalid data format'
+          });
+      }
+
+      // Send proper error response
+      return res.status(500).json({
+          success: false,
+          error: "Internal server error",
+          message: err.message
+      });
+  }
 });
 
 // API to edit a password

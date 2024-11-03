@@ -7,21 +7,23 @@ import { useNavigate } from "react-router-dom";
 import { BASE_AUTH_URL } from "../utils/constants";
 
 const Auth = () => {
-  // State for toggling between login and signup tabs
+  // Tab state management
   const [activeTab, setActiveTab] = useState("login");
 
-  // State for toggling password visibility in input fields
+  // Password visibility toggles
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // State for storing login email and password
-  const [emailId, setEmailId] = useState("virat@gmail.com");
+  // Login form state
+  const [emailId, setEmailId] = useState("vk@gmail.com");
   const [password, setPassword] = useState("Virat@123");
+  const [loginError, setLoginError] = useState("");
 
-  // Redux dispatch function
+  // Redux and navigation hooks
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  // State for signup form data
+  // Signup form state with validation errors
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -29,64 +31,182 @@ const Auth = () => {
     confirmPassword: "",
   });
 
-  // Handle change for signup input fields and update the formData state
+  // Form validation error states
+  const [formErrors, setFormErrors] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  // General signup error state
+  const [signupError, setSignupError] = useState("");
+
+  // Email validation using regex
+  const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Password validation - at least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+  const isValidPassword = (password) => {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return passwordRegex.test(password);
+  };
+
+  // Handle login form validation and submission
+  const handleLogin = async () => {
+    setLoginError("");
+
+    if (!emailId.trim()) {
+      setLoginError("Email is required");
+      return;
+    }
+
+    if (!isValidEmail(emailId)) {
+      setLoginError("Please enter a valid email address");
+      return;
+    }
+
+    if (!password) {
+      setLoginError("Password is required");
+      return;
+    }
+
+    if (!isValidPassword(password)) {
+      setLoginError("Invalid password format. Please check password requirements.");
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        `${BASE_AUTH_URL}/login`,
+        { emailId, password },
+        { withCredentials: true }
+      );
+      dispatch(addUser(res.data));
+      navigate("/");
+    } catch (error) {
+      setLoginError(error.response?.data?.message || "Invalid credentials!");
+      console.error(error);
+    }
+  };
+
+  // Handle signup form input changes with validation
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+    validateField(name, value);
   };
 
-  // Function to handle the login form submission
-  const navigate = useNavigate();
-  const handleLogin = async () => {
+  // Validate individual form fields
+  const validateField = (fieldName, value) => {
+    let error = "";
+
+    switch (fieldName) {
+      case "name":
+        if (!value.trim()) {
+          error = "Name is required";
+        } else if (value.length < 2) {
+          error = "Name must be at least 2 characters long";
+        }
+        break;
+      case "email":
+        if (!value.trim()) {
+          error = "Email is required";
+        } else if (!isValidEmail(value)) {
+          error = "Please enter a valid email address";
+        }
+        break;
+      case "password":
+        if (!value) {
+          error = "Password is required";
+        } else if (!isValidPassword(value)) {
+          error = "Password doesn't meet requirements";
+        }
+        break;
+      case "confirmPassword":
+        if (!value) {
+          error = "Please confirm your password";
+        } else if (value !== formData.password) {
+          error = "Passwords do not match";
+        }
+        break;
+      default:
+        break;
+    }
+
+    setFormErrors((prev) => ({
+      ...prev,
+      [fieldName]: error,
+    }));
+  };
+
+  // Check if all signup form fields are valid
+  const isSignupFormValid = () => {
+    return (
+      formData.name.length >= 2 &&
+      isValidEmail(formData.email) &&
+      isValidPassword(formData.password) &&
+      formData.password === formData.confirmPassword &&
+      !Object.values(formErrors).some((error) => error)
+    );
+  };
+
+  // Handle signup form submission
+  const handleSignup = async () => {
+    setSignupError("");
+
+    if (!isSignupFormValid()) {
+      setSignupError("Please fix all validation errors before submitting");
+      return;
+    }
+
     try {
-      const res = await axios.post(BASE_AUTH_URL + "/login", {
-        emailId,
-        password,
-      }, {
-        withCredentials : true,
-      })
+      const res = await axios.post(
+        `${BASE_AUTH_URL}/signup`,
+        { name: formData.name, email: formData.email, password: formData.password },
+        { withCredentials: true }
+      );
       dispatch(addUser(res.data));
       navigate("/");
-    }
-    catch (error) {
+    } catch (error) {
+      setSignupError(error.response?.data?.message || "Signup failed. Please try again.");
       console.error(error);
     }
-  }
-
-  // Check if password and confirmPassword match for signup validation
-  const passwordsMatch = formData.password && formData.password === formData.confirmPassword;
+  };
 
   return (
     <section className="flex items-center justify-center flex-1 max-md:my-10 max-md:mx-2">
       <div className="shadow-xl card bg-base-300 w-96">
         <div className="card-body">
-          {/* Toggle buttons for switching between login and signup forms */}
+          {/* Tab Toggle Buttons */}
           <div className="relative flex p-1 rounded-lg bg-base-200">
             <div
               className={`absolute transition-all duration-200 ease-in-out bg-primary rounded-md ${
-                activeTab === "login" 
-                  ? "left-1 w-[calc(50%-4px)]" 
-                  : "left-[calc(50%+4px)] w-[calc(50%-8px)]"
+                activeTab === "login" ? "left-1 w-[calc(50%-4px)]" : "left-[calc(50%+4px)] w-[calc(50%-8px)]"
               }`}
               style={{ height: "calc(100% - 8px)" }}
             />
-
-            {/* Login tab button */}
             <button
-              onClick={() => setActiveTab("login")}
+              onClick={() => {
+                setActiveTab("login");
+                setLoginError("");
+              }}
               className={`flex-1 z-10 py-2 text-center rounded-md transition-colors duration-200 ${
                 activeTab === "login" ? "text-primary-content" : "text-base-content"
               }`}
             >
               Login
             </button>
-
-            {/* Signup tab button */}
             <button
-              onClick={() => setActiveTab("signup")}
+              onClick={() => {
+                setActiveTab("signup");
+                setSignupError("");
+              }}
               className={`flex-1 z-10 py-2 text-center rounded-md transition-colors duration-200 ${
                 activeTab === "signup" ? "text-primary-content" : "text-base-content"
               }`}
@@ -95,50 +215,49 @@ const Auth = () => {
             </button>
           </div>
 
-          {/* Login form */}
+          {/* Login Form */}
           {activeTab === "login" && (
             <>
-              <label className="flex items-center gap-2 input input-bordered">
-                {/* Email input with icon */}
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 opacity-70">
-                  <path d="M2.5 3A1.5 1.5 0 0 0 1 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0 1 15 5.293V4.5A1.5 1.5 0 0 0 13.5 3h-11Z" />
-                  <path d="M15 6.954 8.978 9.86a2.25 2.25 0 0 1-1.956 0L1 6.954V11.5A1.5 1.5 0 0 0 2.5 13h11a1.5 1.5 0 0 0 1.5-1.5V6.954Z" />
-                </svg>
-                <input
-                  type="text"
-                  name="email"
-                  value={emailId}
-                  onChange={(e) => setEmailId(e.target.value)}
-                  className="grow"
-                  placeholder="Email"
-                />
+              <label className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 input input-bordered">
+                  <input
+                    type="text"
+                    name="email"
+                    value={emailId}
+                    onChange={(e) => setEmailId(e.target.value)}
+                    className="grow"
+                    placeholder="Email"
+                  />
+                </div>
               </label>
 
-              {/* Password input with icon and visibility toggle */}
-              <label className="flex items-center gap-2 input input-bordered">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 opacity-70">
-                  <path fillRule="evenodd" d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z" clipRule="evenodd" />
-                </svg>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="grow"
-                  placeholder="Password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="btn btn-ghost btn-sm btn-square"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+              <label className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 input input-bordered">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="grow"
+                    placeholder="Password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="btn btn-ghost btn-sm btn-square"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </label>
-              <button
-                className="w-full btn btn-primary"
-                onClick={handleLogin}
-              >
+
+              {loginError && (
+                <div className="flex alert alert-error">
+                  <span>{loginError}</span>
+                </div>
+              )}
+
+              <button className="w-full btn btn-primary" onClick={handleLogin}>
                 Login
               </button>
             </>
@@ -149,9 +268,6 @@ const Auth = () => {
             <>
               {/* Full Name input */}
               <label className="flex items-center gap-2 input input-bordered">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 opacity-70">
-                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
-                </svg>
                 <input
                   type="text"
                   name="name"
@@ -163,10 +279,6 @@ const Auth = () => {
 
               {/* Email input */}
               <label className="flex items-center gap-2 input input-bordered">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 opacity-70">
-                  <path d="M2.5 3A1.5 1.5 0 0 0 1 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0 1 15 5.293V4.5A1.5 1.5 0 0 0 13.5 3h-11Z" />
-                  <path d="M15 6.954 8.978 9.86a2.25 2.25 0 0 1-1.956 0L1 6.954V11.5A1.5 1.5 0 0 0 2.5 13h11a1.5 1.5 0 0 0 1.5-1.5V6.954Z" />
-                </svg>
                 <input
                   type="text"
                   name="email"
@@ -178,9 +290,6 @@ const Auth = () => {
 
               {/* Password input */}
               <label className="flex items-center gap-2 input input-bordered">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 opacity-70">
-                  <path fillRule="evenodd" d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z" clipRule="evenodd" />
-                </svg>
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
@@ -199,9 +308,6 @@ const Auth = () => {
 
               {/* Confirm Password input */}
               <label className="flex items-center gap-2 input input-bordered">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 opacity-70">
-                  <path fillRule="evenodd" d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z" clipRule="evenodd" />
-                </svg>
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   name="confirmPassword"
@@ -218,8 +324,16 @@ const Auth = () => {
                 </button>
               </label>
 
-              {/* Submit button for signup */}
-              <button className="w-full btn btn-primary" disabled={!passwordsMatch}>
+              {signupError && (
+                <div className="flex alert alert-error">
+                  <span>{signupError}</span>
+                </div>
+              )}
+
+              <button
+                className="w-full btn btn-primary"
+                onClick={handleSignup}
+              >
                 Sign Up
               </button>
             </>

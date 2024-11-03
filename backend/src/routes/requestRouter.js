@@ -85,7 +85,7 @@ requestRouter.post("/review/:status/:requestId", userAuth, async (req, res) => {
 
         res.status(200).json({
             message: `Request ${status}`,
-            data,
+            data : data,
         });
     }
     catch (err) {

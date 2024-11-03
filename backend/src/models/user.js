@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema({
         lowercase : true,
         trim : true,
         unique : true,
+        immutable: true,
         maxlength : 50,
         validate(value) {
             if (!validator.isEmail(value)) {
@@ -37,6 +38,16 @@ const userSchema = new mongoose.Schema({
         required : true,
         trim : true,
         minlength : 8,
+    },
+
+    birthDate: {
+        type: Date,
+        required: true,
+        validate(value) {
+            if (value > new Date()) {
+                throw new Error("Birth date cannot be in the future");
+            }
+        },
     },
 
     age : {
@@ -76,6 +87,36 @@ const userSchema = new mongoose.Schema({
 
     skills : {
         type : [String],
+    },
+
+    location : {
+        type : String,
+        validator (value) {
+            if (value.length > 50) {
+                throw new Error("Occupation is too long");
+            }
+            else if (value.length < 1) {
+                throw new Error("Occupation is too short");
+            }
+            else if (/\d/.test(value)) {
+                throw new Error("Occupation should not contain numbers");
+            }
+        }
+    },
+
+    occupation : {
+        type : String,
+        validator (value) {
+            if (value.length > 50) {
+                throw new Error("Occupation is too long");
+            }
+            else if (value.length < 1) {
+                throw new Error("Occupation is too short");
+            }
+            else if (/\d/.test(value)) {
+                throw new Error("Occupation should not contain numbers");
+            }
+        }
     },
 },
 {

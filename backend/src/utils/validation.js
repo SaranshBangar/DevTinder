@@ -32,21 +32,83 @@ const validateLoginData = (req) => {
 };
 
 const validateEditProfileData = (req) => {
-    
-    allowedFields = [
+    const allowedFields = [
         "firstName",
         "lastName",
-        "emailId",
-        "photoUrl",
-        "gender",
-        "age",
         "about",
-        "skills"
+        "skills",
+        "photoUrl",
+        "birthDate",
+        "age",
+        "gender",
+        "location",
+        "occupation"
     ];
 
-    const isUpdateAllowed = Object.keys(req.body).every(field => allowedFields.includes(field));
+    const invalidFields = Object.keys(req.body).filter(field => !allowedFields.includes(field));
+    if (invalidFields.length > 0) {
+        return {
+            isValid: false,
+            error: `Invalid fields: ${invalidFields.join(', ')}`
+        };
+    }
 
-    return isUpdateAllowed;
+    const validations = {
+        firstName: (value) => {
+            if (typeof value !== 'string' || value.length < 1 || value.length > 50) {
+                return 'First name must be between 1 and 50 characters';
+            }
+        },
+        lastName: (value) => {
+            if (value && (typeof value !== 'string' || value.length > 50)) {
+                return 'Last name must not exceed 50 characters';
+            }
+        },
+        about: (value) => {
+            if (value && (typeof value !== 'string' || value.length > 255)) {
+                return 'About must not exceed 255 characters';
+            }
+        },
+        skills: (value) => {
+            if (value && (!Array.isArray(value) || !value.every(skill => typeof skill === 'string'))) {
+                return 'Skills must be an array of strings';
+            }
+        },
+        age: (value) => {
+            if (value && (typeof value !== 'number' || value < 18 || value > 180)) {
+                return 'Age must be between 18 and 180';
+            }
+        },
+        gender: (value) => {
+            if (value && !['male', 'female', 'other'].includes(value.toLowerCase())) {
+                return 'Gender must be male, female, or other';
+            }
+        },
+        location: (value) => {
+            if (value && (typeof value !== 'string' || value.length < 1 || value.length > 50 || /\d/.test(value))) {
+                return 'Location must be 1-50 characters and cannot contain numbers';
+            }
+        },
+        occupation: (value) => {
+            if (value && (typeof value !== 'string' || value.length < 1 || value.length > 50 || /\d/.test(value))) {
+                return 'Occupation must be 1-50 characters and cannot contain numbers';
+            }
+        }
+    };
+
+    for (const [field, value] of Object.entries(req.body)) {
+        const validationError = validations[field]?.(value);
+        if (validationError) {
+            return {
+                isValid: false,
+                error: validationError
+            };
+        }
+    }
+
+    return {
+        isValid: true
+    };
 };
 
 module.exports = {
