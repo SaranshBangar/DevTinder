@@ -7,74 +7,55 @@ import { useNavigate } from "react-router-dom";
 import { BASE_AUTH_URL } from "../utils/constants";
 
 const Auth = () => {
-  // Tab state management
   const [activeTab, setActiveTab] = useState("login");
-
-  // Password visibility toggles
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  // Login form state
   const [emailId, setEmailId] = useState("rs@gmail.com");
   const [password, setPassword] = useState("Rohit@123");
   const [loginError, setLoginError] = useState("");
-
-  // Redux and navigation hooks
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Signup form state with validation errors
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    firstName: "",
+    lastName: "",
+    emailId: "",
     password: "",
     confirmPassword: "",
+    birthDate: "",
   });
 
-  // Form validation error states
   const [formErrors, setFormErrors] = useState({
-    name: "",
-    email: "",
+    firstName: "",
+    lastName: "",
+    emailId: "",
     password: "",
     confirmPassword: "",
+    birthDate: "",
   });
 
-  // General signup error state
   const [signupError, setSignupError] = useState("");
 
-  // Email validation using regex
   const isValidEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // Password validation - at least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
   const isValidPassword = (password) => {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     return passwordRegex.test(password);
   };
 
-  // Handle login form validation and submission
   const handleLogin = async () => {
     setLoginError("");
 
-    if (!emailId.trim()) {
-      setLoginError("Email is required");
-      return;
-    }
-
-    if (!isValidEmail(emailId)) {
+    if (!emailId.trim() || !isValidEmail(emailId)) {
       setLoginError("Please enter a valid email address");
       return;
     }
 
-    if (!password) {
-      setLoginError("Password is required");
-      return;
-    }
-
-    if (!isValidPassword(password)) {
-      setLoginError("Invalid password format. Please check password requirements.");
+    if (!password || !isValidPassword(password)) {
+      setLoginError("Invalid password format");
       return;
     }
 
@@ -92,71 +73,67 @@ const Auth = () => {
     }
   };
 
-  // Handle signup form input changes with validation
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value,
     }));
     validateField(name, value);
   };
 
-  // Validate individual form fields
   const validateField = (fieldName, value) => {
     let error = "";
 
     switch (fieldName) {
-      case "name":
+      case "firstName":
+      case "lastName":
         if (!value.trim()) {
-          error = "Name is required";
-        } else if (value.length < 2) {
-          error = "Name must be at least 2 characters long";
+          error = `${fieldName === 'firstName' ? 'First' : 'Last'} name is required`;
         }
         break;
-      case "email":
-        if (!value.trim()) {
-          error = "Email is required";
-        } else if (!isValidEmail(value)) {
+      case "emailId":
+        if (!value.trim() || !isValidEmail(value)) {
           error = "Please enter a valid email address";
         }
         break;
       case "password":
-        if (!value) {
-          error = "Password is required";
-        } else if (!isValidPassword(value)) {
-          error = "Password doesn't meet requirements";
+        if (!value || !isValidPassword(value)) {
+          error = "Password must have 8+ chars, uppercase, lowercase, number, and special char";
         }
         break;
       case "confirmPassword":
-        if (!value) {
-          error = "Please confirm your password";
-        } else if (value !== formData.password) {
+        if (value !== formData.password) {
           error = "Passwords do not match";
+        }
+        break;
+      case "birthDate":
+        if (!value) {
+          error = "Birth date is required";
         }
         break;
       default:
         break;
     }
 
-    setFormErrors((prev) => ({
+    setFormErrors(prev => ({
       ...prev,
       [fieldName]: error,
     }));
   };
 
-  // Check if all signup form fields are valid
   const isSignupFormValid = () => {
     return (
-      formData.name.length >= 2 &&
-      isValidEmail(formData.email) &&
+      formData.firstName &&
+      formData.lastName &&
+      isValidEmail(formData.emailId) &&
       isValidPassword(formData.password) &&
       formData.password === formData.confirmPassword &&
-      !Object.values(formErrors).some((error) => error)
+      formData.birthDate &&
+      !Object.values(formErrors).some(error => error)
     );
   };
 
-  // Handle signup form submission
   const handleSignup = async () => {
     setSignupError("");
 
@@ -166,12 +143,19 @@ const Auth = () => {
     }
 
     try {
-      const res = await axios.post(
+      const response = await axios.post(
         `${BASE_AUTH_URL}/signup`,
-        { name: formData.name, email: formData.email, password: formData.password },
+        {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          emailId: formData.emailId,
+          password: formData.password,
+          birthDate: formData.birthDate,
+        },
         { withCredentials: true }
       );
-      dispatch(addUser(res.data));
+      
+      dispatch(addUser(response.data.data));
       navigate("/");
     } catch (error) {
       setSignupError(error.response?.data?.message || "Signup failed. Please try again.");
@@ -183,7 +167,6 @@ const Auth = () => {
     <section className="flex items-center justify-center flex-1 max-md:my-10 max-md:mx-2">
       <div className="shadow-xl card bg-base-300 w-96">
         <div className="card-body">
-          {/* Tab Toggle Buttons */}
           <div className="relative flex p-1 rounded-lg bg-base-200">
             <div
               className={`absolute transition-all duration-200 ease-in-out bg-primary rounded-md ${
@@ -215,7 +198,6 @@ const Auth = () => {
             </button>
           </div>
 
-          {/* Login Form */}
           {activeTab === "login" && (
             <>
               <label className="flex flex-col gap-1">
@@ -263,32 +245,47 @@ const Auth = () => {
             </>
           )}
 
-          {/* Signup form */}
           {activeTab === "signup" && (
             <>
-              {/* Full Name input */}
               <label className="flex items-center gap-2 input input-bordered">
                 <input
                   type="text"
-                  name="name"
+                  name="firstName"
                   className="grow"
-                  placeholder="Full Name"
+                  placeholder="First Name"
                   onChange={handleChange}
                 />
               </label>
 
-              {/* Email input */}
               <label className="flex items-center gap-2 input input-bordered">
                 <input
                   type="text"
-                  name="email"
+                  name="lastName"
+                  className="grow"
+                  placeholder="Last Name"
+                  onChange={handleChange}
+                />
+              </label>
+
+              <label className="flex items-center gap-2 input input-bordered">
+                <input
+                  type="text"
+                  name="emailId"
                   className="grow"
                   placeholder="Email"
                   onChange={handleChange}
                 />
               </label>
 
-              {/* Password input */}
+              <label className="flex items-center gap-2 input input-bordered">
+                <input
+                  type="date"
+                  name="birthDate"
+                  className="grow"
+                  onChange={handleChange}
+                />
+              </label>
+
               <label className="flex items-center gap-2 input input-bordered">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -306,7 +303,6 @@ const Auth = () => {
                 </button>
               </label>
 
-              {/* Confirm Password input */}
               <label className="flex items-center gap-2 input input-bordered">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
@@ -328,6 +324,14 @@ const Auth = () => {
                 <div className="flex alert alert-error">
                   <span>{signupError}</span>
                 </div>
+              )}
+
+              {Object.values(formErrors).map((error, index) => 
+                error ? (
+                  <div key={index} className="flex alert alert-warning">
+                    <span>{error}</span>
+                  </div>
+                ) : null
               )}
 
               <button
