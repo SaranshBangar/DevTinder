@@ -12,7 +12,7 @@ const userAuth = async (req, res, next) => {
             });
         }
 
-        const jwtObj = await jwt.verify(token, "Yeh_Mat_Churana@Please520");
+        const jwtObj = await jwt.verify(token, process.env.JWT_SECRET);
 
         if (!jwtObj) {
             return res.status(401).send("Unauthorized access");

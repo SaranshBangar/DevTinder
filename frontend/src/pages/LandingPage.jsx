@@ -38,7 +38,7 @@ const LandingPage = () => {
   }, []);
 
   return (
-    <main className='flex flex-col min-h-screen'>
+    <main className='flex flex-col min-h-screen bg-base-100'>
         <Navbar />
         <Outlet />
         <div className='fixed bottom-0 w-full'><Footer /></div>

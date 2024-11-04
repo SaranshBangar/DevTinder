@@ -87,6 +87,12 @@ const userSchema = new mongoose.Schema({
 
     skills : {
         type : [String],
+        default : [],
+        validate(value) {
+            if (value.length > 10) {
+                throw new Error("Only 10 skills are allowed");
+            }
+        },
     },
 
     location : {

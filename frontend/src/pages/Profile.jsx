@@ -8,6 +8,8 @@ import {
   Cake,
   MapPin,
   Briefcase,
+  CircleX,
+  CircleCheckBig,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
@@ -82,16 +84,18 @@ export default function Profile() {
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
-    if (id === "skills") {
-      setFormData({
-        ...formData,
-        skills: value.split(",").map((skill) => skill.trim()).filter((skill) => skill !== ""),
-      });
+    
+    if (id === 'skills') {
+      const skillsArray = value.split(',').map(skill => skill.trim());
+      setFormData(prev => ({
+        ...prev,
+        skills: skillsArray
+      }));
     } else {
-      setFormData({
-        ...formData,
-        [id]: value,
-      });
+      setFormData(prev => ({
+        ...prev,
+        [id]: value
+      }));
     }
   };
 
@@ -122,6 +126,7 @@ export default function Profile() {
       dispatch(addUser(res.data.data));
       setSuccess("Profile updated successfully! Please reload the page to see the changes");
       setActiveTab("view");
+      window.location.reload();
     } catch (err) {
       setError(err.response?.data?.error || "Failed to update profile");
     } finally {
@@ -146,6 +151,7 @@ export default function Profile() {
                 exit={{ opacity: 0 }}
                 className="mb-4 text-center alert alert-error"
               >
+                <CircleX strokeWidth={1.5} />
                 <span>{error}</span>
               </motion.div>
             )}
@@ -159,6 +165,7 @@ export default function Profile() {
                 exit={{ opacity: 0 }}
                 className="mb-4 alert alert-success"
               >
+                <CircleCheckBig strokeWidth={1} />
                 <span className="text-center">{success}</span>
               </motion.div>
             )}
@@ -349,6 +356,7 @@ export default function Profile() {
                         <input
                           type="text"
                           id="skills"
+                          value={formData.skills.join(', ')}
                           onChange={handleInputChange}
                           className="w-full input input-bordered"
                         />
@@ -377,9 +385,9 @@ export default function Profile() {
                             onChange={handleInputChange}
                             className="w-full select select-bordered"
                           >
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
+                            <option value="male">male</option>
+                            <option value="female">female</option>
+                            <option value="other">other</option>
                           </select>
                         </div>
                       </div>

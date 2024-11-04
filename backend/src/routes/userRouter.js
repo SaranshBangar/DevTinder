@@ -6,7 +6,9 @@ const ConnectionRequest = require("../models/connectionRequest");
 const User = require('../models/user');
 
 
-USER_SAFE_DATA = ["firstName", "lastName", "photoURL", "gender", "age", "about", "skills"];
+REQUEST_SAFE_DATA = ["firstName", "lastName", "photoUrl", "gender", "age", "about", "skills", "occupation", "location"];
+CONNECTION_SAFE_DATA = ["firstName", "lastName", "emailId", "photoUrl", "about", "skills", "age", "occupation", "gender", "location", "birthDate"];
+FEED_SAFE_DATA = ["firstName", "lastName", "photoUrl", "gender", "age", "about", "skills", "occupation", "location"];
 
 // API to get all the pending connection requests
 userRouter.get("/requests", userAuth, async (req, res) => {
@@ -19,7 +21,7 @@ userRouter.get("/requests", userAuth, async (req, res) => {
             status : "like"
         }).populate (
             "senderId",
-            USER_SAFE_DATA
+            REQUEST_SAFE_DATA
         );
 
         res.status(200).json({
@@ -45,10 +47,10 @@ userRouter.get("/connections", userAuth, async (req, res) => {
             ],
         }).populate (
             "senderId",
-            USER_SAFE_DATA
+            CONNECTION_SAFE_DATA
         ).populate (
             "receiverId",
-            USER_SAFE_DATA
+            CONNECTION_SAFE_DATA
         );
 
         const data = connectionRequest.map((row) => {
@@ -85,7 +87,7 @@ userRouter.get("/feed", userAuth, async (req, res) => {
                 { senderId : LoggedInUser._id },
                 { receiverId : LoggedInUser._id }
             ],
-        }).select("senderId receiverId status").populate("senderId receiverId", USER_SAFE_DATA);
+        }).select("senderId receiverId status").populate("senderId receiverId", FEED_SAFE_DATA);
 
         const hiddenUsers = new Set();
         connectionRequest.forEach((req) => {
@@ -104,6 +106,34 @@ userRouter.get("/feed", userAuth, async (req, res) => {
     }
     catch (err) {
         res.status(400).send("Err : " + err.message);
+    }
+})
+
+// API to remove a connection
+userRouter.delete("/remove/:id", userAuth, async (req, res) => {
+
+    try {
+        const LoggedInUser = req.user;
+
+        const connectionRequest = await ConnectionRequest.findOneAndDelete({
+            $or : [
+                { senderId : LoggedInUser._id, receiverId : req.params.id },
+                { senderId : req.params.id, receiverId : LoggedInUser._id }
+            ]
+        });
+
+        if (!connectionRequest) {
+            return res.status(400).json({
+                message : "Connection not found",
+            });
+        }
+
+        res.status(200).json({
+            message : "Connection removed successfully",
+        });
+    }
+    catch (err) {
+        res.status(400).send("Error : " + err.message);
     }
 })
 
